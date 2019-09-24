@@ -1,35 +1,10 @@
-﻿# CMakeList.txt: testo에 대한 CMake 프로젝트, 여기에 소스를 포함하고
-# 프로젝트 특정 논리를 정의합니다.
-#
-cmake_minimum_required (VERSION 3.11)
+﻿cmake_minimum_required (VERSION 3.11)
 
-get_cmake_property(_variableNames VARIABLES)
-list (SORT _variableNames)
-foreach (_variableName ${_variableNames})
-    message(STATUS "${_variableName}=${${_variableName}}")
-endforeach()
-
-if(WIN32)
-	#BOOST
-	SET(BOOST_ROOT "C:/Development/boost/boost_1_69_0")
-	SET(BOOST_LIBRARYDIR, "${BOOST_ROOT}/stage/lib")
-	add_definitions(-D_WIN32_WINNT=0x0501)
-
-	#OPENCV
-	set(OpenCV_DIR "C:/Development/OpenCV/opencv401_build")
-
-	#V8
-	SET(V8_INCLUDE_DIR "D:/Repositories/google/v8/include")
-	SET(V8_LIBRARY_DIR "D:/Repositories/google/v8/out.gn/ia32.debug")
-	SET(V8_REQUIRED_COMPONENTS "v8;v8_libplatform;icui18n;icuuc;v8_libbase")	
-else()
-	#TODO Linux Boost ROOT
-	SET(BOOST_ROOT "")
-	SET(BOOST_LIBRARYDIR, "")
-
-	#OPENCV
-	set(OpenCV_DIR "/usr/lib/opencv")
-endif()
+set (OpenCV_DIR "D:/Development/opencv/opencv-4.1.1/build")
+set (V8_INCLUDE_DIR "D:/Repositories/google/v8/include")
+set (V8_LIBRARY_DIR "D:/Repositories/google/v8/out/x64.release")
+set (V8_REQUIRED_COMPONENTS "v8;v8_libplatform;icui18n;icuuc;v8_libbase")
+set (spdlog_DIR "C:/Workspace/VsCodeProjects/testo/spdlog/build")
 
 # 이 프로젝트의 실행 파일에 소스를 추가합니다.
 add_executable (testo 
@@ -47,32 +22,22 @@ set_target_properties(testo PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT
 
 # BOOST ASIO
 # https://cmake.org/cmake/help/latest/module/FindBoost.html
+if(WIN32)
+	add_definitions(-D_WIN32_WINNT=0x0501)
+endif()
+
 SET(Boost_USE_STATIC_LIBS ON)
 SET(Boost_USE_MULTITHREAD ON)
 
-find_package(Boost 1.69.0 COMPONENTS system regex date_time filesystem program_options REQUIRED)
-
-link_directories(${BOOST_LIBRARYDIR})
-include_directories(${BOOST_ROOT} )
-
-message(STATUS "Boost LINKING LIBRARIES\n${Boost_LIBRARIES}")
+find_package(Boost 1.71.0 COMPONENTS system regex date_time filesystem program_options REQUIRED)
 target_link_libraries(testo ${Boost_LIBRARIES})
-
+include_directories(${Boost_INCLUDE_DIRS})
 
 # OPEN CV 
 find_package( OpenCV COMPONENTS core imgcodecs imgproc REQUIRED)
-
-message(STATUS "OpenCV INCLUDE_DIRS\n${OpenCV_INCLUDE_DIRS}")
-message(STATUS "OpenCV LINKING LIBRARIES\n${OpenCV_LIBS}")
-
 target_link_libraries(testo ${OpenCV_LIBS})
 
-message(STATUS "OpenCV INSTALL PATH:${OpenCV_INSTALL_PATH}")
-message(STATUS "CMAKE_BINARY_DIR:${CMAKE_BINARY_DIR}")
-
 if(WIN32)
-	#WIN32인 경우 OPENCV DLL 라이브러리들 MACRO 써서 카피
-
 	MACRO (copy_opencv_dll trgt libname)
 
 		if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -83,12 +48,13 @@ if(WIN32)
 			Set(OPENCV_DLL_PATH "Release")
 		endif()
 
-		message (STATUS "COPY ${OpenCV_DIR}/bin/${OPENCV_DLL_PATH}/${OPENCV_DLL_NAME}.dll ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}/${CMAKE_BUILD_TYPE}/${OPENCV_DLL_NAME}.dll")		
+		message (STATUS "COPY ${OpenCV_DIR}/bin/${OPENCV_DLL_PATH}/${OPENCV_DLL_NAME}.dll $<TARGET_FILE_DIR:testo>")		
 
 		add_custom_command(TARGET ${trgt} POST_BUILD 
 						COMMAND ${CMAKE_COMMAND} -E copy_if_different
 						"${OpenCV_DIR}/bin/${OPENCV_DLL_PATH}/${OPENCV_DLL_NAME}.dll"
-						"${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}/${CMAKE_BUILD_TYPE}/${OPENCV_DLL_NAME}.dll")
+						#"${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}/${CMAKE_BUILD_TYPE}/${OPENCV_DLL_NAME}.dll")
+						"$<TARGET_FILE_DIR:testo>")
 
 	ENDMACRO()
 
@@ -100,7 +66,10 @@ endif()
 
 
 #spdlog
+
 include_directories("../spdlog/include")
+#find_package(spdlog REQUIRED)
+#target_link_libraries(testo spdlog::spdlog)
 
 # v8
 SET(V8_LIBS "")
@@ -113,8 +82,8 @@ message(STATUS "V8_LIBS:${V8_LIBS}")
 include_directories("${V8_INCLUDE_DIR}")
 target_link_libraries(testo "${V8_LIBS}")
 
-add_custom_command(TARGET testo POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${V8_LIBRARY_DIR}/natives_blob.bin" "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}/${CMAKE_BUILD_TYPE}/.")
-add_custom_command(TARGET testo POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${V8_LIBRARY_DIR}/snapshot_blob.bin" "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}/${CMAKE_BUILD_TYPE}/.")
+add_custom_command(TARGET testo POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${V8_LIBRARY_DIR}/natives_blob.bin" "$<TARGET_FILE_DIR:testo>")
+add_custom_command(TARGET testo POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${V8_LIBRARY_DIR}/snapshot_blob.bin" "$<TARGET_FILE_DIR:testo>")
 
 
 if(WIN32)
@@ -125,7 +94,8 @@ if(WIN32)
 		add_custom_command(TARGET ${trgt} POST_BUILD
 						 COMMAND ${CMAKE_COMMAND} -E copy_if_different
 						 "${V8_LIBRARY_DIR}/${dll_name}.dll"
-						 "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}/${CMAKE_BUILD_TYPE}/${dll_name}.dll"
+						 #"${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}/${CMAKE_BUILD_TYPE}/${dll_name}.dll"
+						 "$<TARGET_FILE_DIR:testo>"
 						 )
 	endmacro()
 
