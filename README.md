@@ -1,25 +1,35 @@
-# Testo
+# Testo: Automated Android Game Testing
 
-*Testo* is a script-based testing automation application for android games. 
+Testo is a powerful script-based testing automation application designed for Android games. It enables developers to efficiently test their games using a variety of pre-defined test scenarios and easily customizable scripts. By leveraging Testo, you can significantly reduce manual testing efforts, increase test coverage, and enhance overall game quality.
 
-## How to build
+## Key Features
 
-### Cmake build (Windows tested only, may not work mac and linux yet)
+- Script-based testing: Easily write and customize test scripts using JavaScript to fit your specific needs.
+- Image recognition: Testo utilizes OpenCV for image recognition, allowing you to interact with the game based on visual elements.
+- Device compatibility: Compatible with both real Android devices and emulators such as Nox.
+- Extensible API: Testo provides a simple and extensible API for tapping, swiping, and waiting on conditions.
+- Cross-platform support: Developed primarily for Windows, with potential for Mac and Linux support in the future.
 
-#### Required libraries
+## How to Build
+
+Testo requires the following libraries:
 
 - Boost 1.69.0 (https://www.boost.org/)
 - OpenCV 4.0.0 (https://opencv.org/)
-- V8(javascript engine) (https://v8.dev/)
+- V8 JavaScript Engine (https://v8.dev/)
 - spdlog (https://github.com/gabime/spdlog)
 
-## How to execute
+### CMake Build (Windows only, Mac and Linux support in development)
+
+Follow the instructions provided by each library to build and install them on your system. Once all the required libraries are installed, you can build Testo using CMake.
+
+## How to Execute
 
 ### Configuration
 
-#### Base javascript template
+#### Base JavaScript Template
 
-A base javascript file contains some meaningful predefined javascript semantics for various test scenarios. A executable testo file always read *testo.js* once at runtime when it initializes. Remember *testo.js* file is required. Put it in to sample folder with testo.exe.
+A base JavaScript file, *testo.js*, contains pre-defined JavaScript semantics for various test scenarios. An executable Testo file reads *testo.js* once at runtime when it initializes. Place the *testo.js* file in the sample folder with testo.exe.
 
 testo.js
 
